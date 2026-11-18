@@ -14,7 +14,7 @@ A product-agnostic AI agent skill that audits **the app or system you're buildin
 ## What it checks
 
 <!-- kb-summary:start -->
-Product-agnostic AI skill that audits the app or system you're building against a checklist covering data and knowledge ownership, server-side authorization, secrets, agent harness, AI governance and shadow AI, models and AI runtime, vendors and AI agencies, evidence and recoverability and more. 70 checks in 13 areas (updated 2026-11-19).
+Product-agnostic AI skill that audits the app or system you're building: data & knowledge ownership, server-side auth, secrets, agent harness, shadow AI, models, vendors, evidence & recovery, tenant isolation, change control, business viability, automation rollout, user trust. 78 checks in 13 areas (updated 2026-11-19).
 
 **Data and knowledge ownership (DATA)**
 - `DATA-1` Every record that matters lives in a server database you own.
@@ -23,6 +23,7 @@ Product-agnostic AI skill that audits the app or system you're building against 
 - `DATA-4` Business knowledge AI relies on (pricing, policies, playbooks, decisions, customer history, expert judgment, prompts and example sets) lives in plain, versioned files or stores the business owns, one topic per file, with drafts kept apart from decisions, so a model or vendor switch keeps it.
 - `DATA-5` No bulk export of company or customer data to a third party (for training, licensing or "AI insights") happens without a written decision on what is being sold, its value and the contract terms.
 - `DATA-6` Imported or migrated records carry their originating system, original ID and import date.
+- `DATA-7` Any dataset built from operational records for fine-tuning or retrieval comes from a repeatable script that removes or masks personal and confidential fields and logs which records and systems went in.
 
 **Server-side authorization (AUTHZ)**
 - `AUTHZ-1` Every API route checks who is calling on the server (token, session, signed URL), on every request.
@@ -30,6 +31,8 @@ Product-agnostic AI skill that audits the app or system you're building against 
 - `AUTHZ-3` Hiding a button is not access control.
 - `AUTHZ-4` Tests call each route directly as the wrong user (no token, other customer, lower role) and expect a refusal.
 - `AUTHZ-5` Sensitive actions (payments, payout or bank-detail changes, account recovery, bulk exports) require step-up verification even for a signed-in user.
+- `AUTHZ-6` Access tokens expire in minutes, not days; refresh tokens are HttpOnly cookies rotated on every use; replaying a used refresh token revokes the whole session; and a password change ends existing sessions.
+- `AUTHZ-7` Every API's CORS policy is a fixed allowlist of the product's own origins: no wildcard on routes returning private data, credentials only for listed origins, and the request's Origin never echoed back blindly.
 
 **Secrets (SEC)**
 - `SEC-1` No secret key ships in front-end code or browser bundles.
@@ -38,6 +41,9 @@ Product-agnostic AI skill that audits the app or system you're building against 
 - `SEC-4` Every credential is short-lived and scoped to one job; there are no long-lived or shared keys.
 - `SEC-5` Dependencies, runtimes and model versions are pinned (with checksums for downloaded weights), and updates go through review and tests before deploy.
 - `SEC-6` An inventory of every internet-reachable host, service and file share exists with its last patch date, and anything unpatched or unneeded is closed.
+- `SEC-7` Only buckets holding intentionally public assets allow public reads; uploads, backups, exports and config sit in private buckets served through expiring signed URLs, with access logging and alerts on unusual downloads.
+- `SEC-8` Services are network-segmented so each reaches only the peers it needs (a public-facing tool can't reach the database), every internal call is authenticated (service tokens or mutual TLS), and each service account has only the rights it uses.
+- `SEC-9` Development and internal services bind to the loopback address unless they must be shared, and reject requests whose Host header isn't on an expected list, which blocks DNS-rebinding attacks.
 
 **Agent harness (HAR)**
 - `HAR-1` Your standards for AI agents are written down in files you own and version, starting with one short rules file at the repo root that every agent loads at session start.
@@ -51,6 +57,7 @@ Product-agnostic AI skill that audits the app or system you're building against 
 - `HAR-9` Every AI provider account has daily and monthly spend caps, and agent calls are rate-limited.
 - `HAR-10` Every agent action (what it sent, changed or deleted) is logged to storage the business controls, with the steps to reverse it.
 - `HAR-11` Corrected or rejected agent outputs are logged (task, output, what was expected, who caught it), and repeated failures become rules.
+- `HAR-12` Files AI coding tools generate (screenshots, recordings, logs, traces, scratch output) go outside the repository or to ignored paths, and a pre-commit or CI check blocks committing images, recordings and debug dumps.
 
 **AI governance and shadow AI (GOV)**
 - `GOV-1` An inventory lists every AI tool and account used with company data, with owner and plan type; personal accounts used for work are moved to company plans.
@@ -69,6 +76,7 @@ Product-agnostic AI skill that audits the app or system you're building against 
 - `MOD-8` A license register covers every model in use: attribution, revenue or user caps, and use restrictions.
 - `MOD-9` Each AI provider has a written exit plan: which jobs it runs, where the data lives, how to export it, and the fallback.
 - `MOD-10` Latency-sensitive AI (voice, live chat) streams every stage and has a measured end-to-end latency budget.
+- `MOD-11` Every self-hosted model server runs under a supervisor with a health check that restarts it on failure, and errors, latency, crashes and restarts are monitored with alerts.
 
 **Vendors and AI agencies (VEN)**
 - `VEN-1` Ask every AI vendor what they did before.
@@ -168,6 +176,16 @@ Why each check matters:
 - [R052](knowledge/insights/R052.md) Build your expertise into an engine you own
 - [R053](knowledge/insights/R053.md) Find and fix shadow AI accounts
 - [R054](knowledge/insights/R054.md) AI writes code; a named human owns it
+- [R055](knowledge/insights/R055.md) Compare API spend with self-hosting over years
+- [R056](knowledge/insights/R056.md) Expire tokens, rotate refresh, recheck roles live
+- [R057](knowledge/insights/R057.md) Lock down cloud storage buckets by default
+- [R058](knowledge/insights/R058.md) Segment services so one breach stays contained
+- [R059](knowledge/insights/R059.md) Treat localhost tools as reachable; authenticate them
+- [R060](knowledge/insights/R060.md) Review and block agent artifacts before commit
+- [R061](knowledge/insights/R061.md) Keep server admin panels off the public internet
+- [R062](knowledge/insights/R062.md) Allow only listed origins in CORS settings
+- [R063](knowledge/insights/R063.md) Fine-tune from one versioned config file
+- [R064](knowledge/insights/R064.md) Scrub operational records before training on them
 <!-- kb-summary:end -->
 
 The full list, with how to verify each check, is in [knowledge/checklist.md](knowledge/checklist.md). The short version for anyone shipping an AI-built app:

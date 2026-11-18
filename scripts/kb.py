@@ -14,7 +14,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 CHECK_RE = re.compile(r"^- \*\*([A-Z]+-\d+)\*\* (.+)$", re.M)
-AREA_RE = re.compile(r"^## (.+?) \(([A-Z]+)\)\s*$", re.M)
+AREA_RE = re.compile(r"^## (.+?) \(([A-Z]+)\)[ \t]*$", re.M)
+SHORT_RE = re.compile(r"^<!-- short: (.+?) -->", re.M)  # optional line under an area heading
 START, END = "<!-- kb-summary:start -->", "<!-- kb-summary:end -->"
 
 
@@ -35,12 +36,16 @@ def load(root=ROOT):
     checklist = (root / "knowledge/checklist.md").read_text(encoding="utf-8").replace("\r\n", "\n")
     checks = CHECK_RE.findall(checklist)  # [(id, text)]
     areas = AREA_RE.findall(checklist)  # [(name, code)]
+    shorts = {}
+    for m in AREA_RE.finditer(checklist):
+        s = SHORT_RE.match(checklist, m.end() + 1)
+        shorts[m.group(2)] = s.group(1).strip() if s else ""
     insights = [front_matter(p) for p in sorted((root / "knowledge/insights").glob("R*.md"))]
-    return checks, areas, insights
+    return checks, areas, insights, shorts
 
 
 def check(root=ROOT):
-    checks, areas, insights = load(root)
+    checks, areas, insights, shorts = load(root)
     ids = [c for c, _ in checks]
     errors = [f"duplicate check id {c}" for c in sorted({c for c in ids if ids.count(c) > 1})]
     codes = {code for _, code in areas}
@@ -53,7 +58,7 @@ def check(root=ROOT):
 
 
 def next_id(root=ROOT):
-    _, _, insights = load(root)
+    _, _, insights, _ = load(root)
     return f"R{max([int(i['id'][1:]) for i in insights] or [0]) + 1:03d}"
 
 
@@ -63,7 +68,7 @@ def first_sentence(text):
 
 
 def descriptions(root=ROOT):
-    checks, areas, insights = load(root)
+    checks, areas, insights, shorts = load(root)
     lower = lambda n: n if n[:2].isupper() else n[0].lower() + n[1:]  # keep "AI ..." capitalized
     names = [lower(name) for name, _ in areas]
     updated = max([i["date"] for i in insights] or ["never"])
@@ -71,17 +76,18 @@ def descriptions(root=ROOT):
     skill = (f"Product-agnostic audit of what you're building (web app, API, mobile app, agent or automation) "
              f"against a checklist for robust, reliable, secure AI products, covering {', '.join(names)}. Use to audit "
              f"the current project or system and get ranked findings with fixes. {counts}.")
-    head = "Product-agnostic AI skill that audits the app or system you're building against a checklist covering "
-    for n in range(len(names), 0, -1):  # GitHub caps repo descriptions at 350 characters
-        listed = ", ".join(names[:n]) + ("" if n == len(names) else " and more")
-        repo = f"{head}{listed}. {counts}."
+    labels = [shorts.get(code) or lower(name) for name, code in areas]
+    head = "Product-agnostic AI skill that audits the app or system you're building: "
+    for n in range(len(labels), 0, -1):  # GitHub caps repo descriptions at 350 characters
+        listed = ", ".join(labels[:n]) + ("" if n == len(labels) else " and more")
+        repo = f"{head}{listed}. {counts}."  # counts = "N checks in K areas (updated D)"
         if len(repo) <= 350:
             break
     return skill, repo
 
 
 def summary(root=ROOT):
-    checks, areas, insights = load(root)
+    checks, areas, insights, shorts = load(root)
     skill_desc, repo_desc = descriptions(root)
     lines = [START, repo_desc, ""]
     for name, code in areas:
@@ -126,7 +132,8 @@ def selftest():
         assert check(t) == [], check(t)
         assert next_id(t) == "R002"
         desc = session(False, t)
-        assert "covering data ownership" in desc and "2 checks in 1 areas (updated 2026-01-02)" in desc, desc
+        assert "building: data ownership." in desc and "2 checks in 1 areas (updated 2026-01-02)" in desc, desc
+        assert "covering data ownership" in (t / "SKILL.md").read_text(encoding="utf-8")
         readme = (t / "README.md").read_text(encoding="utf-8")
         assert "- `DATA-1` Own it." in readme and "More text" not in readme and "old" not in readme
         assert readme.startswith("x\n") and readme.endswith("y\n")
@@ -138,6 +145,9 @@ def selftest():
         _, repo = descriptions(t)
         assert len(repo) <= 350 and repo.endswith("(updated 2026-01-02).") and "and more" in repo, repo
         assert "AI area number 0" in repo, repo
+        (t / "knowledge/checklist.md").write_text(long.replace("(AA)\n", "(AA)\n<!-- short: tiny -->\n"), encoding="utf-8")
+        _, repo = descriptions(t)
+        assert repo.startswith("Product-agnostic AI skill that audits the app or system you're building: tiny, "), repo
         (t / "knowledge/insights/R002.md").write_text(
             "---\nid: R002\ndate: 2026-01-01\ntitle: T\nareas: [NOPE]\nchecks: [NOPE-1]\n---\n", encoding="utf-8")
         errs = check(t)
