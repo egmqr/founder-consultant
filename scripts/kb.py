@@ -64,14 +64,19 @@ def first_sentence(text):
 
 def descriptions(root=ROOT):
     checks, areas, insights = load(root)
-    names = ", ".join(name[0].lower() + name[1:] for name, _ in areas)
+    lower = lambda n: n if n[:2].isupper() else n[0].lower() + n[1:]  # keep "AI ..." capitalized
+    names = [lower(name) for name, _ in areas]
     updated = max([i["date"] for i in insights] or ["never"])
     counts = f"{len(checks)} checks in {len(areas)} areas (updated {updated})"
     skill = (f"Product-agnostic audit of what you're building (web app, API, mobile app, agent or automation) "
-             f"against a checklist for robust, reliable, secure AI products, covering {names}. Use to audit the "
-             f"current project or system and get ranked findings with fixes. {counts}.")
-    repo = (f"Product-agnostic AI skill that audits the app or system you're building against a checklist covering "
-            f"{names}. {counts}.")
+             f"against a checklist for robust, reliable, secure AI products, covering {', '.join(names)}. Use to audit "
+             f"the current project or system and get ranked findings with fixes. {counts}.")
+    head = "Product-agnostic AI skill that audits the app or system you're building against a checklist covering "
+    for n in range(len(names), 0, -1):  # GitHub caps repo descriptions at 350 characters
+        listed = ", ".join(names[:n]) + ("" if n == len(names) else " and more")
+        repo = f"{head}{listed}. {counts}."
+        if len(repo) <= 350:
+            break
     return skill, repo
 
 
@@ -126,6 +131,13 @@ def selftest():
         assert "- `DATA-1` Own it." in readme and "More text" not in readme and "old" not in readme
         assert readme.startswith("x\n") and readme.endswith("y\n")
         assert "2 checks in 1 areas" in (t / "SKILL.md").read_text(encoding="utf-8")
+        long = "".join(f"## AI area number {i} with a long name (A{chr(65 + i)})\n- **A{chr(65 + i)}-1** x\n" for i in range(20))
+        (t / "knowledge/checklist.md").write_text(long, encoding="utf-8")
+        (t / "knowledge/insights/R001.md").write_text(
+            "---\nid: R001\ndate: 2026-01-02\ntitle: T\nareas: [AA]\nchecks: [AA-1]\n---\nbody\n", encoding="utf-8")
+        _, repo = descriptions(t)
+        assert len(repo) <= 350 and repo.endswith("(updated 2026-01-02).") and "and more" in repo, repo
+        assert "AI area number 0" in repo, repo
         (t / "knowledge/insights/R002.md").write_text(
             "---\nid: R002\ndate: 2026-01-01\ntitle: T\nareas: [NOPE]\nchecks: [NOPE-1]\n---\n", encoding="utf-8")
         errs = check(t)
