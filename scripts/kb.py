@@ -62,11 +62,6 @@ def next_id(root=ROOT):
     return f"R{max([int(i['id'][1:]) for i in insights] or [0]) + 1:03d}"
 
 
-def first_sentence(text):
-    text = re.sub(r"_From [^_]*_", "", text).strip()
-    return re.split(r"(?<=[.!?])\s", text, maxsplit=1)[0]
-
-
 def descriptions(root=ROOT):
     checks, areas, insights, shorts = load(root)
     lower = lambda n: n if n[:2].isupper() else n[0].lower() + n[1:]  # keep "AI ..." capitalized
@@ -87,16 +82,10 @@ def descriptions(root=ROOT):
 
 
 def summary(root=ROOT):
-    checks, areas, insights, shorts = load(root)
+    _, areas, _, _ = load(root)
     skill_desc, repo_desc = descriptions(root)
-    lines = [START, repo_desc, ""]
-    for name, code in areas:
-        lines.append(f"**{name} ({code})**")
-        lines += [f"- `{cid}` {first_sentence(text)}" for cid, text in checks if cid.startswith(code + "-")]
-        lines.append("")
-    lines += ["Why each check matters:", ""]
-    lines += [f"- [{i['id']}](knowledge/insights/{i['id']}.md) {i['title']}" for i in insights]
-    lines.append(END)
+    # README shows the overview only (area headings); the checks themselves stay in knowledge/
+    lines = [START, repo_desc, ""] + [f"- **{name} ({code})**" for name, code in areas] + [END]
     readme = root / "README.md"
     text = readme.read_text(encoding="utf-8")
     text = re.sub(re.escape(START) + ".*?" + re.escape(END), lambda _: "\n".join(lines), text, flags=re.S)
@@ -135,7 +124,8 @@ def selftest():
         assert "building: data ownership." in desc and "2 checks in 1 areas (updated 2026-01-02)" in desc, desc
         assert "covering data ownership" in (t / "SKILL.md").read_text(encoding="utf-8")
         readme = (t / "README.md").read_text(encoding="utf-8")
-        assert "- `DATA-1` Own it." in readme and "More text" not in readme and "old" not in readme
+        assert "- **Data ownership (DATA)**" in readme and "DATA-1" not in readme and "R001" not in readme, readme
+        assert "old" not in readme
         assert readme.startswith("x\n") and readme.endswith("y\n")
         assert "2 checks in 1 areas" in (t / "SKILL.md").read_text(encoding="utf-8")
         long = "".join(f"## AI area number {i} with a long name (A{chr(65 + i)})\n- **A{chr(65 + i)}-1** x\n" for i in range(20))
