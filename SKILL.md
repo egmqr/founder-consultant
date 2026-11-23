@@ -1,6 +1,6 @@
 ---
 name: founder-consultant
-description: Product-agnostic audit of what you're building (web app, API, mobile app, agent or automation) against a checklist for robust, reliable, secure AI products, covering data and knowledge ownership, server-side authorization, secrets, agent harness, AI governance and shadow AI, models and AI runtime, vendors and AI agencies, evidence and recoverability, tenant isolation, change control for in-house builders, business viability, automation rollout, user communication and trust. Use to audit the current project or system and get ranked findings with fixes. 93 checks in 13 areas (updated 2026-11-22).
+description: Product-agnostic audit of what you're building (web app, API, mobile app, agent or automation) against a checklist for robust, reliable, secure AI products, covering data and knowledge ownership, server-side authorization, secrets, agent harness, AI governance and shadow AI, models and AI runtime, vendors and AI agencies, evidence and recoverability, tenant isolation, change control for in-house builders, business viability, automation rollout, user communication and trust. Use to audit the current project or system and get ranked findings with fixes. 98 checks in 13 areas (updated 2026-11-23).
 ---
 
 # Founder consultant
