@@ -14,7 +14,7 @@ A product-agnostic AI agent skill that audits **the app or system you're buildin
 ## What it checks
 
 <!-- kb-summary:start -->
-Product-agnostic AI skill that audits the app or system you're building: data & knowledge ownership, server-side auth, secrets, agent harness, shadow AI, models, vendors, evidence & recovery, tenant isolation, change control, business viability, automation rollout, user trust. 98 checks in 13 areas (updated 2026-11-23).
+Product-agnostic AI skill that audits the app or system you're building: data & knowledge ownership, server-side auth, secrets, agent harness, shadow AI, models, vendors, evidence & recovery, tenant isolation, change control, business viability, automation rollout, user trust. 103 checks in 13 areas (updated 2026-11-24).
 
 - **Data and knowledge ownership (DATA)**
 - **Server-side authorization (AUTHZ)**
